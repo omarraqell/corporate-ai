@@ -1,0 +1,41 @@
+{
+  "sop": [
+    "SOP: Employee Onboarding Process",
+    "SOP: Incident Response Protocol",
+    "SOP: Data Access Request Procedure",
+    "SOP: Client Escalation Workflow",
+    "SOP: Code Review Process",
+    "SOP: Expense Reimbursement",
+    "SOP: Quarterly Business Review Preparation",
+    "SOP: Security Vulnerability Disclosure",
+    "SOP: New Feature Release Process",
+    "SOP: Vendor Evaluation and Procurement",
+    "SOP: Employee Offboarding",
+    "SOP: Change Management Process",
+    "SOP: Customer Data Deletion Request",
+    "SOP: Meeting Standards and Etiquette",
+    "SOP: API Versioning and Deprecation"
+  ],
+  "routing_rule": [
+    "Routing Rule: Technical and Code Requests",
+    "Routing Rule: Research and Investigation",
+    "Routing Rule: Data Analysis Requests",
+    "Routing Rule: Writing and Communication",
+    "Routing Rule: Task and Project Management",
+    "Routing Rule: General Inquiries",
+    "Routing Rule: Multi-Agent Collaboration",
+    "Routing Rule: Escalation and Urgent Requests"
+  ],
+  "company_doc": [
+    "Company Handbook: Our Culture and Values",
+    "Product Overview: Platform Capabilities",
+    "Engineering Standards",
+    "Marketing Guidelines",
+    "Q1 2026 Strategy Memo",
+    "Benefits and Compensation Overview",
+    "Sales Playbook: Enterprise Deals",
+    "Customer Success Playbook",
+    "Information Security Policy",
+    "Remote Work Policy"
+  ]
+}

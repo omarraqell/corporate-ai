@@ -1,0 +1,42 @@
+[project]
+name = "corporate-ai-backend"
+version = "0.1.0"
+description = "Corporate AI Multi-Agent System Backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "pgvector>=0.3",
+    "alembic>=1.13",
+    "pydantic-settings>=2.1",
+    "sentence-transformers>=3.0",
+    "transformers>=4.40",
+    "datasets>=2.18",
+    "torch>=2.2",
+    "scikit-learn>=1.4",
+    "langchain>=0.2",
+    "langchain-community>=0.2",
+    "langchain-openai>=0.1",
+    "openai>=1.30",
+    "langchain-text-splitters>=0.2",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "scripts*"]

@@ -1,0 +1,54 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: corporate
+      POSTGRES_PASSWORD: corporate
+      POSTGRES_DB: corporate_ai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U corporate -d corporate_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8001:8000"
+    env_file: .env
+    environment:
+      PYTHONPATH: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    command: >
+      sh -c "
+        echo '==> Running migrations...' &&
+        alembic upgrade head &&
+        echo '==> Generating synthetic docs...' &&
+        python -m scripts.generate_synthetic_docs &&
+        echo '==> Seeding RAG store...' &&
+        python -m scripts.seed_rag --if-empty &&
+        echo '==> Starting backend...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8001
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
