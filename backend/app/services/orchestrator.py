@@ -26,9 +26,12 @@ from app.agents.base_agent import AgentContext, AgentResult
 from app.agents.qa_reviewer import QAReviewerAgent
 from app.config import settings
 from app.models.conversation import Conversation
+from app.agents.dynamic_agent import DynamicAgent as DynamicAgentRunner
+from app.models.dynamic_agent import DynamicAgent as DynamicAgentModel
 from app.services.hr_memory import HRMemoryService
 from app.services.rag_pipeline import RAGService
 from app.services.receptionist import ReceptionistService
+from app.utils.embeddings import EmbeddingService
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +101,24 @@ class OrchestratorService:
         # --- Step 5: Determine routing ---
         target_agents = LABEL_TO_AGENTS.get(classification["label"], [])
 
-        # --- Step 6: Execute ---
+        # --- Step 5b: Check dynamic agents if no static match ---
+        dynamic_agent = None
         if not target_agents:
+            dynamic_agent = await self._check_dynamic_agents(db, message)
+
+        # --- Step 6: Execute ---
+        if dynamic_agent:
+            # Dynamic agent matched — run it through the standard pipeline
+            results = [await dynamic_agent.execute(context)]
+            target_agents = [dynamic_agent.name]
+
+            # QA Review
+            qa_result = await self._qa_review(context, results)
+            final_response = await self._synthesize(context, qa_result, results)
+
+            # Notify secretary
+            asyncio.create_task(self._notify_secretary(context, results))
+        elif not target_agents:
             # General inquiry — CEO handles directly with RAG context
             final_response = await self._ceo_direct_response(context, db)
         else:
@@ -380,6 +399,68 @@ class OrchestratorService:
         except Exception as e:
             logger.error(f"CEO direct response failed: {e}")
             return "I'm having trouble accessing the knowledge base. Please try again."
+
+    async def _check_dynamic_agents(
+        self, db: AsyncSession, message: str
+    ) -> DynamicAgentRunner | None:
+        """Check if a dynamic agent matches the message by name or semantic similarity."""
+        result = await db.execute(
+            select(DynamicAgentModel).where(DynamicAgentModel.is_active.is_(True))
+        )
+        agents = result.scalars().all()
+
+        if not agents:
+            return None
+
+        msg_lower = message.lower()
+
+        # 1. Explicit name match
+        for agent in agents:
+            if agent.display_name.lower() in msg_lower or agent.name in msg_lower:
+                logger.info(f"Dynamic agent matched by name: {agent.name}")
+                return DynamicAgentRunner(
+                    name=agent.name,
+                    display_name=agent.display_name,
+                    description=agent.description,
+                    system_prompt=agent.system_prompt,
+                    tool_names=agent.tools,
+                    output_format=agent.output_format,
+                )
+
+        # 2. Semantic similarity match
+        embedder = EmbeddingService.get_instance()
+        msg_embedding = embedder.embed_single(message)
+
+        best_agent = None
+        best_score = 0.0
+
+        for agent in agents:
+            desc_embedding = embedder.embed_single(agent.description)
+            # Cosine similarity
+            dot = sum(a * b for a, b in zip(msg_embedding, desc_embedding))
+            norm_a = sum(a * a for a in msg_embedding) ** 0.5
+            norm_b = sum(b * b for b in desc_embedding) ** 0.5
+            similarity = dot / (norm_a * norm_b) if norm_a and norm_b else 0.0
+
+            if similarity > best_score:
+                best_score = similarity
+                best_agent = agent
+
+        if best_agent and best_score > 0.75:
+            logger.info(
+                f"Dynamic agent matched by similarity: {best_agent.name} "
+                f"(score: {best_score:.3f})"
+            )
+            return DynamicAgentRunner(
+                name=best_agent.name,
+                display_name=best_agent.display_name,
+                description=best_agent.description,
+                system_prompt=best_agent.system_prompt,
+                tool_names=best_agent.tools,
+                output_format=best_agent.output_format,
+            )
+
+        return None
 
     async def _store_conversation(
         self,
