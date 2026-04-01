@@ -26,6 +26,7 @@ ROUTE_LABELS = [
     "general_inquiry",
     "multi_agent",
     "escalation",
+    "agent_management",
 ]
 
 LABEL_DESCRIPTIONS = {
@@ -37,6 +38,7 @@ LABEL_DESCRIPTIONS = {
     "general_inquiry": "Company policy questions, general info, procedures, HR questions",
     "multi_agent": "Complex requests requiring multiple capabilities (research + writing, data + code, etc.)",
     "escalation": "Urgent requests, emergencies, critical issues, system outages, immediate action needed",
+    "agent_management": "Creating, listing, managing, or deleting custom AI agents",
 }
 
 SYSTEM_PROMPT = f"""You are a message classifier for a corporate AI system. Your job is to classify incoming user messages into exactly one route label.

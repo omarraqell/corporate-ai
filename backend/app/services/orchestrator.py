@@ -43,6 +43,7 @@ LABEL_TO_AGENTS = {
     "general_inquiry": [],  # CEO handles directly with RAG context
     "multi_agent": ["research_analyst", "data_analyst", "writer"],
     "escalation": ["research_analyst", "secretary"],
+    "agent_management": ["agent_creator"],
 }
 
 

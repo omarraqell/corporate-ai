@@ -1,3 +1,4 @@
+from app.agents.agent_creator import AgentCreatorAgent
 from app.agents.code_dev import CodeDevAgent
 from app.agents.data_analyst import DataAnalystAgent
 from app.agents.qa_reviewer import QAReviewerAgent
@@ -12,6 +13,7 @@ AGENT_REGISTRY = {
     "writer": WriterAgent,
     "code_dev": CodeDevAgent,
     "qa_reviewer": QAReviewerAgent,
+    "agent_creator": AgentCreatorAgent,
 }
 
 
@@ -27,6 +29,7 @@ __all__ = [
     "WriterAgent",
     "CodeDevAgent",
     "QAReviewerAgent",
+    "AgentCreatorAgent",
     "AGENT_REGISTRY",
     "create_agent_registry",
 ]
