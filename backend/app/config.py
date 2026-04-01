@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     # LLM
     openai_api_key: str = ""
     ollama_base_url: str = ""
+    tavily_api_key: str = ""
     llm_model_name: str = "gpt-4o-mini"
 
     # Models
