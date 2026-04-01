@@ -1,39 +1,55 @@
 """
 Web search tool for agents.
 
-Uses a simple approach: asks the LLM to synthesize information
-based on its training data. For production, swap in a real search
-API (SerpAPI, Tavily, Brave Search, etc.)
+Uses the Tavily API for AI-optimized web search.
 """
+
+import logging
 
 import httpx
 
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 async def web_search(query: str, num_results: int = 5) -> str:
-    """
-    Search the web for information.
+    """Search the web using Tavily API."""
+    if not settings.tavily_api_key:
+        return (
+            f"[Web search for: '{query}']\n"
+            f"Web search is not configured. Add TAVILY_API_KEY to .env to enable."
+        )
 
-    For now, returns a note that real search requires an API key.
-    Replace this with a real search provider in production.
-    """
-    # Placeholder: in production, integrate with a search API
-    # Example with Tavily:
-    # async with httpx.AsyncClient() as client:
-    #     response = await client.post(
-    #         "https://api.tavily.com/search",
-    #         json={"query": query, "max_results": num_results, "api_key": settings.tavily_api_key},
-    #     )
-    #     results = response.json()["results"]
-    #     return "\n".join(f"- {r['title']}: {r['content']}" for r in results)
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                "https://api.tavily.com/search",
+                json={
+                    "query": query,
+                    "max_results": num_results,
+                    "api_key": settings.tavily_api_key,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
 
-    return (
-        f"[Web search for: '{query}']\n"
-        f"Note: Web search is not yet configured. To enable, add a search API key "
-        f"(Tavily, SerpAPI, or Brave Search) to the environment and update this tool.\n"
-        f"For now, please answer based on your training knowledge."
-    )
+        results = data.get("results", [])
+        if not results:
+            return f"No web results found for: '{query}'"
+
+        lines = []
+        for r in results:
+            title = r.get("title", "Untitled")
+            url = r.get("url", "")
+            content = r.get("content", "")[:500]
+            lines.append(f"### {title}\nURL: {url}\n{content}")
+
+        return "\n\n---\n\n".join(lines)
+
+    except Exception as e:
+        logger.error(f"Tavily search failed: {e}")
+        return f"Web search failed: {str(e)}"
 
 
 WEB_SEARCH_SCHEMA = {
